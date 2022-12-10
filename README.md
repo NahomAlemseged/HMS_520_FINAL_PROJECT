@@ -24,4 +24,4 @@ from literature, which are then checked for significance using statistical tests
 ### Group Members
 * Kemal Sherefa
 * Dereje Yada
-* Nahom A.
+* Nahom A. Worku

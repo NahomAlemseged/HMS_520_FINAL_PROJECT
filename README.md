@@ -1,3 +1,4 @@
+
 # HMS_520_FINAL_PROJECT
 This repository is for the course of HMS-520 final data analysis project on child mortality.
 ## Introduction
@@ -20,4 +21,7 @@ from literature, which are then checked for significance using statistical tests
 * Data pre-processing and data wrangling
 * Descriptive statistics  
 * Estimation of U5MR at national and Subnational level
- 
+### Group Members
+* Kemal Sherefa
+* Dereje Yada
+* Nahom A.

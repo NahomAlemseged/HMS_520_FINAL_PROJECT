@@ -1,0 +1,170 @@
+---
+title: "CHILD MORTALITY IN ETHIOPIA"
+author: "Kemal, Dereje, Nahom"
+date: "2022-12-09"
+output:
+  html_document:
+    theme: yeti
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	cache = TRUE,
+	root.dir = "C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/codes"
+)
+knitr::opts_chunk$set(cache =  TRUE)
+knitr::opts_chunk$set(root.dir =  "C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/codes")
+```
+
+```{r klippy, echo=FALSE, include=TRUE}
+library(klippy)
+klippy::klippy()
+```
+
+# Introduction
+
+Under five mortality has been a major health concern in Sub-Saharan Africa. Ethiopia, being a Sub-Saharan African country,has a mojor concern in relation to Child death but has achieved modest progress toward achieving the Millennium Development Goals (MDGs) of reducing under-5 deaths. Despite this, Ethiopia's new-born and under-5 death rates are at 30 and 50 per 1000, respectively, far exceeding the SDG targets of 12 and 25 deaths per 1000 for new-borns and under-5 deaths. 
+Therefore, The aim of this study is to study descriptive analysis and estimation. Estimation of U5M is conducted using Space-time smoothing model. Logistic regression model is then conducted to identify risk factors for Under five death.
+
+# Methods
+
+## Data Source
+
+For this study, the Ethiopian Demographic and Health Survey (EDHS) 2016 survey is bieng used. The EDHS survey is a national household survey conducted by the USAID.For the 2016 EDHS, 15,683 women ages 15-49, and 12,688 men ages 15-59 were successfully interviewed from 16,650 households. In addition to commonly covered topics in DHS such as child and maternal health, family planning, nutrition, health behavior and knowledge, health care access, and child immunization, blood samples were collected from consenting individuals for the presence of HIV and AIDS, and anemia.
+
+## Study Variables
+
+We have tried to incorporate six risk factors for this study. Variables have been selected from previous studies and literature.
+
+Variables used are
+
+* Region
+* Residence Type (Rural/Urban)
+* Birth Interval
+* Facility Delivery
+* Child Size
+* Outcome Variable (Child died)
+
+These variables are selected as to represent various socio-economic, demographic, clinical and family planning related risk factors.
+
+## Analytic Strategy
+### Data Preprocessing 
+The data pre processing exercise in general contains re factoring  variables, group values and merge tables as well. 
+
+### Importing Libraries
+
+```{r echo = T,eval=F, warning=FALSE, error=FALSE, results='hide'}
+library('readstata13')
+library('data.table')
+library('tidyverse')
+library('knitr')
+library('kableExtra')
+library('gtsummary')
+library('table1')
+library('SUMMER')
+library('ggplot2')
+library('gridExtra')
+library('sp')
+library('rigr')
+library('ggplot2')
+library('ggpubr')
+library('dbplyr')
+library('boot')
+library('table1')
+
+
+```
+### Importing Data
+The original was in a .dta format (Stata file). To read this we require the library readstata13 to read the data. Hence
+
+```{r eval=TRUE, echo=F, error=FALSE, warning=FALSE}
+path_ <- ("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/ETBR71FL.DTA")
+df_1 <- read.dta13(path_,generate.factors = TRUE)
+```
+The data contains more than 1287 columns.<p> 
+Once we load the data, we have to rename variables for convenience.
+Here, we need to filter data points where difference between date of interview and date of birth is less than 60 months (Five years cohort). This variable is encoded as b19 in the data.
+
+```{r, eval=TRUE}
+df <- setDT(df_1)
+df <- df[(b19 < 60)]
+```
+
+Once we replace all the relevant samples, we can rename and keep the relevant data for modeling.
+
+```{r, eval=TRUE}
+df <- df[ ,.(region = v024, clust_no = v001, bir_int = b11, num_anc = m14, fac_del = m15, outcome = b5,type_res = v025, size_child = m18)]
+```
+
+Finally,the dataset after the completion of the preprocessing would look like the following.
+
+
+
+```{r, eval=TRUE, echo=FALSE}
+df_new <- read.csv("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/Prep_data.csv")
+```
+
+```{r, eval=TRUE, echo=FALSE}
+knitr::kable(head(df_new), "simple", align = "lcccccr", caption = "Table 1: Results after pre-processing") 
+```
+
+
+
+### Analysis of mortality estimation
+Once the data is preprocessed, mortality estimation has been done using space time model. The space time model uses bayesian statistical model to estimate prevalence of U5M across space and time. It does interpolation analysis to refine estimates through proximity over space and time.
+
+### Association of risk factors
+Once the national and sub national mortality estimation is obtained through the Space-time model, we analyzed the important nd identified attributable risk factors contributing for under-five mortality estimation. Inference is made if the contributing factors are significant and are associated with the death of Children.
+
+## Results and Discussion
+
+In our analysis, we performed exploratory data analysis to visualize the distribution of mortality among demographic entities, specifically region, as can be seen from figure 1.
+
+![Fig 1: Bar graph ](C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/Assets/Desc_bar.png)
+
+Descriptive analysis is performed for the association between the response and explanatory variables. Table 2 below shows the association of the explanatory variables to the outcome variable.
+
+```{r, eval=TRUE, echo=FALSE}
+df_lab <- read.csv("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/Label_data.csv") 
+df_lab <- setDT(df_lab)
+```
+
+
+```{r, eval=T, echo=FALSE}
+
+df_lab %>%
+  select(b5, v024,v025, b11, m15) %>%
+  tbl_summary(by = b5,
+              statistic = list(
+                all_categorical() ~ "{n} ({p}%)"),
+  ) %>%
+  add_p(pvalue_fun = ~style_pvalue(.x, digits = 2)) %>%
+  add_overall() %>%
+  add_n() %>%
+  modify_header(label ~ "**Variable**")%>%
+  modify_caption("Table 2: Respondents Characteristics")%>%
+  bold_labels()
+
+```
+
+The mortality estimation estimated from the space time modeling is explained from the spatial map generated as shown in figure 2.
+
+![Fig 2: Subnational burden distribution of U5M across time](C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/Assets/Spatial_map.png)
+
+A direct mortality estimation is being used to estimate the national level estimates is shown in figure 3 and 4 below. Also, 95% Uncertainty intervals are also estimated for the national estimate. Similarly, figure 5 displays the sub-national trends of burden is computed and compared.
+
+![Fig 3: Direct mortality estimation of U5M.](C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/Assets/nation_est.png)
+
+![Fig 4: Smoothed Direct mortality estimation of U5M.](C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/Assets/smoothed_nation_est.png)
+
+![Fig 3: Subnational mortality estimation of U5M.](C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/Assets/subnat_period.png)
+
+
+### Contributors
+* Kemal Sherefa
+* Dereje Yada
+* Nahom A. Worku
+

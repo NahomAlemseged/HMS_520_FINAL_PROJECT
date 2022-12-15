@@ -1,76 +1,133 @@
 rm(list = ls())
-# install.packages('readstata13')
-library('readstata13')
+library('readstata13') #library to read
 library('data.table')
 library('tidyverse')
 library('dplyr')
+library('mice')
 
-ab <- ("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/ETBR71FL.DTA")
-df <- read.dta13(ab,generate.factors = TRUE)
-View(df)
-df_viz <- copy(df)
+dr <- ("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/ETBR71FL.DTA")
+setwd("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/")
+df_gps <- read.csv("gps_data.csv")
+df <- read.dta13(dr,generate.factors = TRUE)
 df <- setDT(df)
-df_viz <- setDT(df_viz)
-df <- df_viz
+View(df)
+
+temp <- df
 
 #################################################
-# filter data for age <60 month old.packages
+# filter data for age <60 month old to obtain five years cohort
 ##############################################
 df <- df[(b19 < 60)]
-df_viz <- df_viz[(b19 < 60)]
 df <- df[ ,.(region = v024, clust_no = v001, bir_int = b11, num_anc = m14, fac_del = m15, outcome = b5,type_res = v025, size_child = m18)]
-View(df)
 summary(df)
-########################################
-df_no <- df[outcome == 'no'] 
-View(df_no)
+
 ####################################################
 # we can see that a 357 anc-visit is missing for dead class
 ####################################################
 df <- df[, -c("num_anc")]
+df_lab <- df
+
 ########################################################
 # REFACTOR DF
 ######################################################
+# TWO DATASETS ARE TO GENERATE HERE ARE TWO:
+#     df: VALUES FACTORED AS NUMBERS
+#     df_lab: VALUES AS LABELS 
+##########################################################
+# generating df
+####################################################
 ### RENAME GROUP (convert to numerical variables)
 #######################################################
-temp <- df
-X <- c(unique(temp$region))
-temp$region <- factor(temp$region, levels = X, labels = c(1:c(length(X))))
-temp$outcome <- factor(temp$outcome, levels = c('yes','no'), labels = c(0:1))
-temp$type_res <- factor(temp$type_res, levels = c('urban','rural'), labels = c(0:1))
-View(temp)
+
+X <- c(unique(df$region))
+df$region <- factor(df$region, levels = X, labels = c(1:c(length(X))))
+
+df$outcome <- factor(df$outcome, levels = c('yes','no'), labels = c(0:1))
+df$type_res <- factor(df$type_res, levels = c('urban','rural'), labels = c(0:1))
+View(df)
 ############################################################3
 # Group then re-factor
 #############################################################
-X <- unique(temp$fac_del)
+X <- unique(df$fac_del)
 X <- c('home',"respondent's home",'other home','public sector','government hospital',
        'government health center','government health post',
        'other public sector','private sector','private hospital','private clinic',
        'other private sector','ngo','ngo: health facility','ngo: other health facility','other')
 
 
-temp$fac_del <- factor(temp$fac_del, levels = c(X),
+df$fac_del <- factor(df$fac_del, levels = c(X),
                        labels = c(0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1)
 )
 ###########################################################################
 # GROUP using cut for birth interval
 #########################################################################
-temp$bir_int <- cut(temp$bir_int, breaks = c(-Inf,24,Inf), labels = c(0,1), include.lowest = FALSE, na.rm = TRUE)
+birint <- function(data){
+  data$bir_int <- cut(data$bir_int, breaks = c(-Inf,24,Inf), labels = c(0,1), include.lowest = FALSE, na.rm = TRUE)
+  return(data)
+} 
+df <- birint(df)
+
 
 ###########################################################################
 # GROUP using cut for size-child
 #########################################################################
-temp1 <- temp
-temp$size_child <- factor(temp$size_child, levels = c(unique(temp$size_child)),
+
+df$size_child <- factor(df$size_child, levels = c(unique(df$size_child)),
                           labels = c(3,4,5,2,1,NA)
 )
-temp <- na.omit(temp)
+##########################################################################
+# IMPUTATION FOR MISSING DATA
+#########################################
 
-temp <- temp[,c(1:4,6:7,5)]
-View(temp)
-write_csv(temp,"Prep_data.csv")
+imp <- mice(df, m=5, maxit = 50, method = 'pmm', seed = 500)
+
+df <- complete(imp,5)
+
+print(paste('rows = ',nrow(df), ':', '',sum(is.na(df))))
+############################################
+# TO BE DELETED
+############################################
+
+df <- df[,c(1:4,6:7,5)]
+View(df)
+####################################################
+# Exporting for further analysis
+###################################################
+
+##################################################
+# df_lab for labeled variables
+#################################################d
+df_lab <- birint(df_lab)
+df_lab$fac_del <- factor(df_lab$fac_del, levels = c(X),
+                     labels = c(0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1))
+df_lab$fac_del <- factor(df_lab$fac_del, levels = c(0,1),
+                         labels = c('out_of_fasc', 'within'))
+df_lab$bir_int <- factor(df_lab$bir_int, levels = c(0,1),
+                         labels = c('<2', '2+'))    ###this code is repetitive but small line of code,no need to modularize.
 
 
+imp_1 <- mice(df_lab, m=5, maxit = 50, method = 'pmm', seed = 500)
+df_lab <- complete(imp_1,5)
+View(df_lab)
+##########################################################
+# MERGING DATASETS WITH GR FILE
+##########################################################
+# Preprocessing geographic information
+############################################################
+View(df_gps)
+
+df_lab$region <- tolower(df_lab$region)
+df_gps$region <- tolower(df_gps$region)
+
+df_merge <- merge(df_lab, df_gps, by.x = c("clust_no","region"), 
+                  by.y = c("cluster","region"))
+
+View(df_merge)
+############################################
+# WRITE (EXPORT)  CSV FILES
+############################################
+write_csv(df_merge,"Prep_data.csv")
+write_csv(df,"logreg_data.csv")
 
 
 

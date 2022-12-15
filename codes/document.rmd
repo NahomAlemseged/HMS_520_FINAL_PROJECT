@@ -127,28 +127,7 @@ In our analysis, we performed exploratory data analysis to visualize the distrib
 
 Descriptive analysis is performed for the association between the response and explanatory variables. Table 2 below shows the association of the explanatory variables to the outcome variable.
 
-```{r, eval=TRUE, echo=FALSE}
-df_lab <- read.csv("C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/data/Label_data.csv") 
-df_lab <- setDT(df_lab)
-```
-
-
-```{r, eval=T, echo=FALSE}
-
-df_lab %>%
-  select(b5, v024,v025, b11, m15) %>%
-  tbl_summary(by = b5,
-              statistic = list(
-                all_categorical() ~ "{n} ({p}%)"),
-  ) %>%
-  add_p(pvalue_fun = ~style_pvalue(.x, digits = 2)) %>%
-  add_overall() %>%
-  add_n() %>%
-  modify_header(label ~ "**Variable**")%>%
-  modify_caption("Table 2: Respondents Characteristics")%>%
-  bold_labels()
-
-```
+![](C:/Users/nahomw/Desktop/assignments/First Quarter/data_wrangling/project_U5M/HMS_520_FINAL_PROJECT/Assets/Rplot.png)
 
 The mortality estimation estimated from the space time modeling is explained from the spatial map generated as shown in figure 2.
 

@@ -1,6 +1,18 @@
+
 #####################################################################
 # FUNCTIONS FOR U5M ESTIMATION
 #####################################################################
+# FUNCTIONS FOR BARPLOT
+##################################################
+plot_2_bar <- function(data){
+  gg <- ggplot(data = data) +
+    geom_bar(mapping = aes(x = region,fill = outcome),
+             position = "dodge") + 
+    coord_flip()+
+    labs(title = "Figure 1 Child Status for each of the regions", 
+         x = "Regions", y = "Frequency")
+  return(gg)
+}
 #####################################################################
 dir_plot <- function(data){
   direct1<-subset(direct, region=="All")

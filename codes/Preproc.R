@@ -54,7 +54,6 @@ X <- c('home',"respondent's home",'other home','public sector','government hospi
        'other public sector','private sector','private hospital','private clinic',
        'other private sector','ngo','ngo: health facility','ngo: other health facility','other')
 
-
 df$fac_del <- factor(df$fac_del, levels = c(X),
                        labels = c(0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1)
 )
@@ -110,23 +109,10 @@ imp_1 <- mice(df_lab, m=5, maxit = 50, method = 'pmm', seed = 500)
 df_lab <- complete(imp_1,5)
 View(df_lab)
 ##########################################################
-# MERGING DATASETS WITH GR FILE
-##########################################################
-# Preprocessing geographic information
-############################################################
-View(df_gps)
-
-df_lab$region <- tolower(df_lab$region)
-df_gps$region <- tolower(df_gps$region)
-
-df_merge <- merge(df_lab, df_gps, by.x = c("clust_no","region"), 
-                  by.y = c("cluster","region"))
-
-View(df_merge)
 ############################################
 # WRITE (EXPORT)  CSV FILES
 ############################################
-write_csv(df_merge,"Prep_data.csv")
+write_csv(df_lab,"Prep_data.csv")
 write_csv(df,"logreg_data.csv")
 
 

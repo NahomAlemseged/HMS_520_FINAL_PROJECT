@@ -1,5 +1,5 @@
 
-# HMS_520_FINAL_PROJECT
+# Direct Under-five mortality estimation in Ethiopia for years 2000-2016 using Bayesian modeling
 This repository is for the course of HMS-520 final data analysis project on child mortality.
 ## Introduction
 Under five mortality has been a major health concern in LMICs. Ethiopia too has been affected by
